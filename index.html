@@ -2,880 +2,705 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Notes Plus — Enhanced</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Simple Notes — Mobile Friendly</title>
 <style>
   :root{
-    --bg:#0f1724;
-    --surface:#0b1020;
-    --muted:#94a3b8;
-    --card:#0f1724;
-    --accent:#2563eb;
-    --accent-2:#7c3aed;
-    --glass: rgba(255,255,255,0.04);
-    --radius:14px;
-    --shadow: 0 8px 30px rgba(2,6,23,0.6);
-    --glass-border: rgba(255,255,255,0.04);
-    --success: #16a34a;
-    --danger: #ef4444;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    --bg: #f7f8fb;
+    --card: #ffffff;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --radius: 12px;
+    --shadow: 0 6px 18px rgba(16,24,40,0.06);
+    --glass: rgba(255,255,255,0.6);
   }
 
-  html,body{height:100%; margin:0; background:linear-gradient(180deg,#061026 0%, #07132b 50%, #081428 100%); color:#e6eef6;}
+  /* Basic reset */
   *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#0f172a;background:linear-gradient(180deg,#f9fafb, #f3f4f6)}
   a{color:inherit}
+
+  /* App container */
   .app {
-    max-width:1200px;
-    margin:28px auto;
+    max-width:1100px;
+    margin:0 auto;
+    padding:14px;
     display:grid;
-    grid-template-columns: 340px 1fr 360px;
-    gap:20px;
-    padding:18px;
-    align-items:start;
+    grid-template-columns: 1fr;
+    gap:12px;
   }
 
-  /* Left panel */
-  .left {
-    position:relative;
+  /* Header */
+  header {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:8px;
   }
-  .brand {
-    display:flex; gap:12px; align-items:center; margin-bottom:14px;
+  .brand { font-weight:700; font-size:18px; }
+  .search {
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:8px;
   }
-  .logo {
-    width:52px; height:52px; border-radius:12px;
-    background: linear-gradient(135deg,var(--accent), var(--accent-2));
-    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; color:white;
-    box-shadow: 0 8px 30px rgba(37,99,235,0.18);
+  .search input {
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid rgba(15,23,42,0.06);
+    background:var(--card);
+    font-size:15px;
   }
-  .brand h1{margin:0; font-size:18px; letter-spacing:0.2px;}
-  .controls {display:flex; gap:8px; margin-left:auto; align-items:center}
+  .icon-btn {
+    width:44px; height:44px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center;
+    background:var(--card); border:1px solid rgba(15,23,42,0.04); box-shadow:var(--shadow); cursor:pointer;
+    font-size:18px;
+  }
 
-  .searchBar {
-    display:flex; gap:8px; margin-bottom:12px;
-  }
-  .searchBar input {
-    flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--glass-border); background: rgba(255,255,255,0.02); color:inherit;
-    outline:none;
-  }
-  .smallBtn {
-    padding:8px 10px; border-radius:10px; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); cursor:pointer; color:inherit;
+  /* Content layout (mobile friendly) */
+  .main {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:8px;
   }
 
-  .tag-chips { display:flex; gap:8px; padding:8px 6px; overflow:auto; margin-bottom:8px; }
-  .chip { font-size:13px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.02); color:var(--muted); cursor:pointer; white-space:nowrap; border:1px solid transparent; }
-  .chip.active { background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:white; box-shadow:0 6px 18px rgba(37,99,235,0.12); font-weight:600; }
-
-  .left .meta { margin-top:10px; display:flex; gap:10px; align-items:center; color:var(--muted); font-size:13px; }
+  /* Tag chips */
+  .chips {
+    display:flex;
+    gap:8px;
+    overflow:auto;
+    padding:4px 2px;
+  }
+  .chip {
+    flex:0 0 auto;
+    padding:8px 12px;
+    background:rgba(15,23,42,0.04);
+    color:var(--muted);
+    border-radius:999px;
+    cursor:pointer;
+    font-size:14px;
+  }
+  .chip.active {
+    background:linear-gradient(90deg,var(--accent), color-mix(in srgb, var(--accent) 80%, white));
+    color:white;
+    font-weight:600;
+  }
 
   /* Notes list */
-  .center {
-    max-height: calc(100vh - 96px);
-    overflow:auto;
-    padding-right:6px;
-  }
-
-  .sectionTitle { font-size:12px; color:var(--muted); letter-spacing:0.08em; margin:8px 4px; font-weight:700; }
   .notes {
-    display:flex; flex-direction:column; gap:10px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
   }
-
   .note {
-    display:flex; gap:12px; align-items:flex-start;
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.015));
-    border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,0.03);
-    transition: transform .12s ease, box-shadow .12s ease; cursor:pointer;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    padding:12px;
+    background:var(--card);
+    border-radius:12px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(15,23,42,0.03);
+    cursor:pointer;
   }
-  .note:hover { transform: translateY(-6px); box-shadow: var(--shadow) }
-  .note .leftIcon { width:36px; text-align:center; font-size:18px; color:var(--accent); margin-top:6px; }
-  .note .content { flex:1; min-width:0; }
-  .note .titleRow { display:flex; align-items:center; gap:8px; }
-  .note .title { font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .note .when { margin-left:auto; color:var(--muted); font-size:12px; }
-  .note .preview { margin-top:6px; color:#cfe3ff; font-size:13px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .note .tags { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
-  .tag-pill { background: rgba(255,255,255,0.03); color:var(--muted); padding:5px 8px; border-radius:999px; font-size:12px; }
-
-  .note .actions { display:flex; gap:6px; margin-left:12px; align-items:center; }
-  .note .action { background:transparent; border:1px solid rgba(255,255,255,0.03); padding:6px 8px; border-radius:8px; color:var(--muted); cursor:pointer; }
-
-  /* Right panel (editor / preview / settings) */
-  .right {
-    position:relative;
+  .note .meta {
+    flex:1;
+    min-width:0;
   }
-  .editorCard {
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:14px; padding:12px; border:1px solid rgba(255,255,255,0.03);
-    min-height:220px; display:flex; flex-direction:column; gap:8px;
+  .note .title {
+    font-weight:700;
+    font-size:16px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
-  .editorTop { display:flex; gap:8px; align-items:center; }
-  .titleInput { flex:1; padding:10px 12px; border-radius:10px; background:transparent; border:1px dashed rgba(255,255,255,0.03); color:inherit; font-weight:700; }
-  .bodyInput { flex:1; min-height:180px; padding:12px; border-radius:10px; background:transparent; border:1px dashed rgba(255,255,255,0.03); color:inherit; resize:vertical; font-size:14px; line-height:1.5; }
-  .toolbar { display:flex; gap:8px; align-items:center; margin-top:6px; }
-  .btnPrimary { background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:white; padding:8px 12px; border-radius:10px; border:none; cursor:pointer; box-shadow:0 8px 24px rgba(37,99,235,0.16) }
-  .btnGhost { background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.02); padding:8px 10px; border-radius:10px; cursor:pointer; }
+  .note .preview {
+    color:#475569;
+    font-size:14px;
+    margin-top:6px;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .note .right {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    align-items:flex-end;
+  }
+  .note .pill {
+    font-size:12px;
+    padding:6px 8px;
+    background:rgba(99,102,241,0.08);
+    border-radius:999px;
+    color:#3730a3;
+  }
+  .note small { color:var(--muted); }
 
-  .small { font-size:13px; padding:6px 8px; border-radius:8px; }
-
-  .settingsArea { padding:12px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006)); border:1px solid rgba(255,255,255,0.02); }
-  .field { display:flex; gap:8px; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,0.01); }
-  .field:last-child{ border-bottom:0; }
-
-  /* Floating and toasts */
+  /* Floating new button */
   .fab {
-    position:fixed; right:28px; bottom:28px; width:60px; height:60px; border-radius:50%;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2)); display:flex; align-items:center; justify-content:center; color:white; font-size:26px; box-shadow:0 18px 40px rgba(37,99,235,0.18); cursor:pointer; z-index:60;
-  }
-  .snackbar {
-    position:fixed; left:50%; transform:translateX(-50%); bottom:90px; background:rgba(5,8,15,0.92); color:white; padding:12px 16px; border-radius:10px; box-shadow:0 8px 30px rgba(2,6,23,0.6);
-    display:flex; gap:12px; align-items:center; z-index:90;
+    position:fixed;
+    right:16px;
+    bottom:18px;
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    background:var(--accent);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
+    box-shadow:0 12px 30px rgba(37,99,235,0.18);
+    border:none;
+    cursor:pointer;
+    z-index:30;
   }
 
-  .kbd { background:rgba(255,255,255,0.04); padding:6px 8px; border-radius:6px; font-size:13px; }
-
-  /* highlight */
-  mark { background: rgba(250,219,78,0.22); padding:0 2px; border-radius:3px; color:#051225; font-weight:700; }
-
-  /* responsive */
-  @media (max-width: 1100px) {
-    .app { grid-template-columns: 1fr; padding:12px; gap:12px; }
-    .right{ order:3 }
-    .center{ order:2 }
-    .left{ order:1 }
-    .fab { right:18px; bottom:18px }
+  /* Bottom sheet editor (mobile friendly) */
+  .sheet {
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:-100%;
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+    border-top-left-radius:18px;
+    border-top-right-radius:18px;
+    box-shadow:0 -16px 40px rgba(2,6,23,0.12);
+    transition:bottom .28s cubic-bezier(.2,.9,.2,1);
+    padding:14px;
+    z-index:40;
+    max-height:92vh;
+    overflow:auto;
   }
+  .sheet.open { bottom:0; }
+  .sheet .handle { width:36px; height:4px; background:#e6e9ef; border-radius:6px; margin:6px auto; }
+  .sheet .row { display:flex; gap:8px; align-items:center; margin-top:8px; }
+  .sheet input[type="text"], .sheet textarea {
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid rgba(15,23,42,0.06);
+    font-size:15px;
+  }
+  .sheet textarea { min-height:160px; resize:vertical; }
+  .sheet .actions { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+  .btn {
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid rgba(15,23,42,0.06);
+    background:var(--card);
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn.primary { background:var(--accent); color:white; border:0; }
+  .btn.danger { background:#fff5f5; color:#b91c1c; border:1px solid rgba(185,28,28,0.08); }
+
+  /* Small screen friendly touch area */
+  button, .chip { touch-action:manipulation; }
+
+  /* Simple settings drawer (overlay) */
+  .settings {
+    position:fixed;
+    right:12px;
+    top:12px;
+    background:var(--card);
+    border-radius:12px;
+    padding:10px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(15,23,42,0.04);
+    display:none;
+    z-index:50;
+  }
+  .settings.open { display:block; }
+
+  /* Responsive: two-column on wider screens */
+  @media(min-width:900px){
+    .app { grid-template-columns: 1fr 420px; align-items:start; }
+    header { padding:0 8px; }
+    .main { padding:0 }
+    .sheet { left:50%; transform:translateX(-50%); width:560px; border-radius:14px; }
+  }
+
+  mark { background: #fde68a; padding:0 2px; border-radius:3px; color:#111827; }
 </style>
 </head>
 <body>
-<div class="app" id="app">
-  <div class="left">
-    <div class="brand">
-      <div class="logo">N+</div>
-      <div>
-        <h1>Notes Plus</h1>
-        <div class="meta">Lightweight notes, tags, lock, markdown & export</div>
+  <div class="app" id="app">
+    <header>
+      <div class="brand">Simple Notes</div>
+      <div class="search">
+        <input id="search" type="search" placeholder="Search notes or tags..." aria-label="Search notes">
       </div>
-      <div class="controls" style="margin-left:auto">
-        <button id="settingsBtn" class="smallBtn" title="Settings">⚙</button>
-      </div>
-    </div>
+      <button id="settingsToggle" class="icon-btn" title="Settings">⚙️</button>
+    </header>
 
-    <div class="searchBar">
-      <input id="search" placeholder="Search notes, body, tags — press /" aria-label="Search notes" />
-      <button id="newNote" class="smallBtn" title="New note">New</button>
-    </div>
+    <div class="main">
+      <div class="chips" id="tagChips" aria-hidden="false"></div>
 
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-      <select id="sort" class="smallBtn" title="Sort notes">
-        <option value="recent">Recent</option>
-        <option value="title">Title A–Z</option>
-        <option value="created">Date Created</option>
-        <option value="manual">Manual (Drag)</option>
-      </select>
-      <button id="clearFilter" class="smallBtn">Clear</button>
-      <div style="margin-left:auto; color:var(--muted); font-size:13px" id="countBadge"></div>
-    </div>
-
-    <div class="tag-chips" id="tagChips" aria-hidden="false">
-      <!-- injected -->
-    </div>
-
-    <div style="margin-top:10px;">
-      <button class="smallBtn" id="exportBtn">Export JSON</button>
-      <input type="file" id="importInput" accept="application/json" style="display:none" />
-      <button class="smallBtn" id="importBtn">Import</button>
-      <button class="smallBtn" id="resetBtn" style="margin-left:8px;color:var(--danger);border-color:rgba(239,68,68,0.16)">Reset</button>
+      <div class="notes" id="notesList" aria-live="polite"></div>
     </div>
   </div>
 
-  <div class="center">
-    <div class="sectionTitle">Pinned</div>
-    <div id="pinnedNotes" class="notes" aria-live="polite"></div>
+  <button class="fab" id="fab" aria-label="New note">＋</button>
 
-    <div style="height:14px"></div>
-
-    <div class="sectionTitle">Notes</div>
-    <div id="notes" class="notes"></div>
-  </div>
-
-  <div class="right">
-    <div class="editorCard" id="editorCard">
-      <div class="editorTop">
-        <input id="title" class="titleInput" placeholder="Title" />
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button id="pinBtn" class="btnGhost small">Pin</button>
-          <button id="lockBtn" class="btnGhost small">Lock</button>
-        </div>
-      </div>
-
-      <textarea id="body" class="bodyInput" placeholder="Write your note. Supports simple markdown."></textarea>
-
-      <div class="toolbar">
-        <input id="tagInput" placeholder="Add tag and press Enter" style="padding:8px;border-radius:8px;background:transparent;border:1px dashed rgba(255,255,255,0.02);color:inherit" />
-        <button id="addTag" class="btnGhost small">Add Tag</button>
-        <div id="tagList" style="display:flex; gap:8px; margin-left:8px; flex-wrap:wrap"></div>
-        <div style="margin-left:auto; display:flex; gap:8px;">
-          <button id="togglePreview" class="btnGhost small">Preview</button>
-          <button id="checklist" class="btnGhost small">Checklist</button>
-          <button id="timestamp" class="btnGhost small">Timestamp</button>
-          <button id="save" class="btnPrimary small">Save</button>
-        </div>
-      </div>
-
-      <div id="preview" style="display:none; padding:8px; border-radius:8px; border:1px dashed rgba(255,255,255,0.02); background:rgba(255,255,255,0.01); color:#d7e9ff"></div>
-    </div>
-
-    <div style="height:12px"></div>
-
-    <div class="settingsArea">
-      <div style="display:flex; justify-content:space-between; align-items:center">
-        <strong>App Settings</strong>
-        <span class="kbd">n: new • /: search • Esc: close</span>
-      </div>
-      <div class="field">
-        <div>
-          <div style="font-weight:700">Accent color</div>
-          <div style="color:var(--muted); font-size:13px">Pick a theme color</div>
-        </div>
-        <input type="color" id="accentColor" value="#2563eb" />
-      </div>
-
-      <div class="field">
-        <div>
-          <div style="font-weight:700">PIN (for locking)</div>
-          <div style="color:var(--muted); font-size:13px">Set a 4-6 digit PIN (optional)</div>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center">
-          <input id="pinInput" placeholder="••••" style="padding:6px 8px; width:120px; border-radius:8px; background:transparent; border:1px dashed rgba(255,255,255,0.02); color:inherit" />
-          <button id="setPin" class="btnGhost">Set</button>
-        </div>
-      </div>
-
-      <div class="field">
-        <div>
-          <div style="font-weight:700">Show tag chips</div>
-          <div style="color:var(--muted); font-size:13px">Toggle tag filter visibility</div>
-        </div>
-        <input type="checkbox" id="showTags" checked />
-      </div>
-      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
-        <button id="clearData" class="smallBtn">Clear Local Data</button>
+  <!-- Bottom sheet editor -->
+  <div class="sheet" id="editorSheet" aria-hidden="true">
+    <div class="handle" aria-hidden="true"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <strong id="editorTitle">New Note</strong>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="duplicateBtn" class="btn" title="Duplicate">Duplicate</button>
+        <button id="deleteBtn" class="btn danger" title="Delete">Delete</button>
       </div>
     </div>
+
+    <div class="row" style="margin-top:10px;">
+      <input id="noteTitle" type="text" placeholder="Title">
+      <button id="pinBtn" class="btn" title="Pin/unpin">📌</button>
+      <button id="lockBtn" class="btn" title="Lock/unlock">🔒</button>
+    </div>
+
+    <div class="row" style="margin-top:8px;">
+      <input id="tagInput" type="text" placeholder="Add tag and press Enter">
+      <button id="addTagBtn" class="btn">Add</button>
+    </div>
+    <div class="chips" id="editorTags" style="margin-top:8px"></div>
+
+    <div style="margin-top:8px">
+      <textarea id="noteBody" placeholder="Write your note..."></textarea>
+    </div>
+
+    <div class="actions">
+      <button id="closeEditor" class="btn">Close</button>
+      <button id="saveNote" class="btn primary">Save</button>
+    </div>
   </div>
-</div>
 
-<button class="fab" id="fab">+</button>
-
-<!-- snackbar -->
-<div id="snack" style="display:none" class="snackbar"></div>
+  <div class="settings" id="settings" role="dialog" aria-modal="false" aria-hidden="true">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <label for="accentColor" style="font-weight:600">Accent</label>
+      <input id="accentColor" type="color" value="#2563eb" />
+    </div>
+    <div style="margin-top:8px;">
+      <label style="display:block;font-weight:600">Lock PIN (optional)</label>
+      <input id="pinInput" type="text" placeholder="Set a 4+ digit PIN" style="padding:8px;border-radius:8px;border:1px solid rgba(15,23,42,0.06);width:100%" />
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button id="savePin" class="btn">Save PIN</button>
+        <button id="clearPin" class="btn">Clear PIN</button>
+      </div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">
+      <button id="closeSettings" class="btn">Close</button>
+    </div>
+  </div>
 
 <script>
 /*
-  Notes Plus — Enhanced single-file app
-  Improvements made:
-  - UI polish (dark glass design, better spacing, animations)
-  - Manual sort mode + drag & drop ordering
-  - Simple PIN-based note locking (set PIN in settings)
-  - Markdown preview toggle (basic markdown)
-  - Export/Import JSON and Reset to seed
-  - Undo delete via snackbar
-  - Keyboard shortcuts: N (new), / (focus search), Esc (close/blur)
-  - Tag chips, tag editor, duplicates, pin/unpin, timestamp, checklist toggles
-  - Persistent settings & notes via localStorage
+  Simple Notes — mobile-first single-file app
+  - Storage: localStorage
+  - Features: create/edit/delete/duplicate/pin/lock/tags/search/sort recent-title
+  - Editor: bottom-sheet modal for comfortable mobile typing
 */
 
-(() => {
-  // ------- Utilities -------
-  const NOTES_KEY = 'notes_plus_v2_notes';
-  const SETTINGS_KEY = 'notes_plus_v2_settings';
-  const SEED = [
-    { id: id(), title: 'Welcome to Notes Plus', body: 'This is your first note.\n\n- Tap + to create a note\n- Use Save to persist\n- Try locking a note (set PIN in settings)', tags:['welcome'], pinned: true, locked:false, createdAt: now(), updatedAt: now(), order: 0 },
-    { id: id(), title: 'Checklist example', body: '- [ ] Buy milk\n- [x] Check mail\n- [ ] Plan weekend', tags:['todo'], pinned:false, locked:false, createdAt: now(), updatedAt: now(), order: 1 }
-  ];
-
-  function id(){ return 'id-' + Math.random().toString(36).slice(2,9); }
-  function now(){ return new Date().toISOString(); }
-  function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
-  function loadJSON(key, fallback){ try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch(e){ console.error(e); return fallback; } }
-  function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
-
-  // simple hash for PIN (not cryptographically secure! just to avoid raw PIN in storage)
-  function pinHash(pin){ try { return btoa(pin.split('').reverse().join('')); } catch(e) { return pin; } }
-  function checkPin(pin, hash){ return pinHash(pin) === hash; }
-
-  // very simple markdown -> HTML (headings, bold, italics, lists, code, links)
-  function simpleMarkdown(md){
-    if(!md) return '';
-    // escape
-    let s = md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    // code blocks
-    s = s.replace(/```([\s\S]*?)```/g, (m, code) => '<pre><code>' + code.replace(/</g,'&lt;') + '</code></pre>');
-    // inline code
-    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
-    // headings
-    s = s.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    s = s.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    s = s.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-    // bold & italic
-    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    // links
-    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-    // lists
-    s = s.replace(/^\s*[-*] (.*)/gm, '<li>$1</li>');
-    s = s.replace(/(<li>.*<\/li>)/gms, '<ul>$1</ul>');
-    // paragraphs
-    s = s.split(/\n{2,}/).map(p => p.trim()).map(p => p.startsWith('<') ? p : '<p>' + p.replace(/\n/g,'<br>') + '</p>').join('\n');
-    return s;
-  }
-
-  // relative time friendly
+(function(){
+  // Utilities
+  const STORAGE_KEY = 'simple_notes_v1';
+  const SETTINGS_KEY = 'simple_notes_settings_v1';
+  function uid(){ return 'n-' + Math.random().toString(36).slice(2,10); }
+  function nowISO(){ return new Date().toISOString(); }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
   function relTime(iso){
-    const d = new Date(iso); const diff = (Date.now() - d.getTime())/1000;
-    if(diff < 60) return Math.floor(diff) + 's';
-    if(diff < 3600) return Math.floor(diff/60) + 'm';
-    if(diff < 3600*24) return Math.floor(diff/3600) + 'h';
-    const days = Math.floor(diff/(3600*24));
-    if(days < 7) return days + 'd';
+    const d = new Date(iso), diff = Math.floor((Date.now()-d)/1000);
+    if(diff<60) return diff+'s';
+    if(diff<3600) return Math.floor(diff/60)+'m';
+    if(diff<86400) return Math.floor(diff/3600)+'h';
     return d.toLocaleDateString();
   }
+  function saveNotes(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(notes)); }
+  function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 
-  // Highlight query occurrences in plain text -> HTML
-  function highlight(text, q){
-    if(!q) return escapeHtml(text || '');
-    const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp(esc, 'ig');
-    return escapeHtml(text || '').replace(re, m => `<mark>${m}</mark>`);
-  }
-  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+  // Simple PIN "hash" (not security-grade, just to avoid storing plain text)
+  function pinHash(pin){ try{ return btoa(pin.split('').reverse().join('')); }catch(e){return pin;} }
+  function checkPin(pin, hash){ return pinHash(pin) === hash; }
 
-  // ------- State -------
-  let notes = loadJSON(NOTES_KEY, null);
-  if(!notes || !Array.isArray(notes) || notes.length === 0) { notes = JSON.parse(JSON.stringify(SEED)); saveJSON(NOTES_KEY, notes); }
-  let settings = loadJSON(SETTINGS_KEY, { accent: '#2563eb', showTags:true, pinHash: null, sort: 'recent' });
-  let current = null; // id of note open in editor
-  let lastDeleted = null; // for undo
-  let manualDragEnabled = false;
-
-  // ------- Elements -------
-  const el = {
+  // DOM
+  const els = {
     search: document.getElementById('search'),
-    newNote: document.getElementById('newNote'),
-    sort: document.getElementById('sort'),
     tagChips: document.getElementById('tagChips'),
-    pinnedNotes: document.getElementById('pinnedNotes'),
-    notesArea: document.getElementById('notes'),
-    title: document.getElementById('title'),
-    body: document.getElementById('body'),
+    notesList: document.getElementById('notesList'),
+    fab: document.getElementById('fab'),
+    editorSheet: document.getElementById('editorSheet'),
+    noteTitle: document.getElementById('noteTitle'),
+    noteBody: document.getElementById('noteBody'),
+    addTagBtn: document.getElementById('addTagBtn'),
+    tagInput: document.getElementById('tagInput'),
+    editorTags: document.getElementById('editorTags'),
+    saveNote: document.getElementById('saveNote'),
+    closeEditor: document.getElementById('closeEditor'),
+    deleteBtn: document.getElementById('deleteBtn'),
+    duplicateBtn: document.getElementById('duplicateBtn'),
     pinBtn: document.getElementById('pinBtn'),
     lockBtn: document.getElementById('lockBtn'),
-    addTag: document.getElementById('addTag'),
-    tagInput: document.getElementById('tagInput'),
-    tagList: document.getElementById('tagList'),
-    togglePreview: document.getElementById('togglePreview'),
-    preview: document.getElementById('preview'),
-    checklist: document.getElementById('checklist'),
-    timestamp: document.getElementById('timestamp'),
-    save: document.getElementById('save'),
-    fab: document.getElementById('fab'),
-    settingsBtn: document.getElementById('settingsBtn'),
-    settingsArea: document.querySelector('.settingsArea'),
+    settingsToggle: document.getElementById('settingsToggle'),
+    settingsPanel: document.getElementById('settings'),
     accentColor: document.getElementById('accentColor'),
     pinInput: document.getElementById('pinInput'),
-    setPin: document.getElementById('setPin'),
-    showTags: document.getElementById('showTags'),
-    exportBtn: document.getElementById('exportBtn'),
-    importBtn: document.getElementById('importBtn'),
-    importInput: document.getElementById('importInput'),
-    resetBtn: document.getElementById('resetBtn'),
-    clearData: document.getElementById('clearData'),
-    snack: document.getElementById('snack'),
-    countBadge: document.getElementById('countBadge'),
-    clearFilter: document.getElementById('clearFilter'),
+    savePin: document.getElementById('savePin'),
+    clearPin: document.getElementById('clearPin'),
+    closeSettings: document.getElementById('closeSettings'),
+    searchInput: document.getElementById('search'),
+    tagChipsWrapper: document.getElementById('tagChips')
   };
 
-  // load settings UI
-  el.accentColor.value = settings.accent || '#2563eb';
-  el.showTags.checked = settings.showTags !== false;
-  el.sort.value = settings.sort || 'recent';
-  applyAccent(settings.accent || '#2563eb');
+  // Data
+  let notes = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || [
+    { id: uid(), title:'Welcome', body:'This is your first note. Tap + to create another.', tags:['welcome'], pinned:true, locked:false, createdAt:nowISO(), updatedAt:nowISO() }
+  ];
+  let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null') || { accent:'#2563eb', pinHash:null, showTags:true, sort:'recent' };
 
-  // ------- Render -------
-  function uniqueTags(){
-    const s = new Set();
-    notes.forEach(n => (n.tags||[]).forEach(t => { const t2 = (t||'').trim(); if(t2) s.add(t2); }));
-    return Array.from(s).sort((a,b)=>a.localeCompare(b));
-  }
-
-  function renderTags(){
-    el.tagChips.innerHTML = '';
-    if(!settings.showTags) return;
-    const all = document.createElement('button'); all.className='chip'; all.textContent='All';
-    all.onclick = ()=> { selectedTag = null; render(); };
-    el.tagChips.appendChild(all);
-
-    uniqueTags().forEach(t => {
-      const b = document.createElement('button'); b.className='chip'; b.textContent = t;
-      b.onclick = ()=> { selectedTag = t; render(); };
-      el.tagChips.appendChild(b);
-    });
-  }
-
+  // UI state
+  let currentId = null;
   let selectedTag = null;
+
+  // Init UI values
+  els.accentColor.value = settings.accent || '#2563eb';
+  document.documentElement.style.setProperty('--accent', settings.accent || '#2563eb');
+
+  // Render helpers
+  function allTags(){
+    const s = new Set();
+    notes.forEach(n => (n.tags||[]).forEach(t => { if(t && t.trim()) s.add(t.trim()); }));
+    return Array.from(s).sort();
+  }
+
   function filterAndSort(){
+    const q = (els.search.value || '').trim().toLowerCase();
     let arr = notes.slice();
-    const q = el.search.value.trim().toLowerCase();
     if(q){
-      arr = arr.filter(n => (n.title||'').toLowerCase().includes(q) ||
-                          (n.body||'').toLowerCase().includes(q) ||
-                          (n.tags||[]).join(' ').toLowerCase().includes(q));
+      arr = arr.filter(n => (n.title||'').toLowerCase().includes(q) || (n.body||'').toLowerCase().includes(q) || (n.tags || []).join(' ').toLowerCase().includes(q));
     }
     if(selectedTag){
       arr = arr.filter(n => (n.tags||[]).some(t => t.toLowerCase() === selectedTag.toLowerCase()));
     }
-    const sort = el.sort.value;
-    if(sort === 'recent'){
-      arr.sort((a,b)=> (b.pinned - a.pinned) || (new Date(b.updatedAt) - new Date(a.updatedAt)));
-    } else if(sort === 'title'){
-      arr.sort((a,b)=> (b.pinned - a.pinned) || ( (a.title||'').localeCompare(b.title||'') ));
-    } else if(sort === 'created'){
-      arr.sort((a,b)=> (b.pinned - a.pinned) || (new Date(b.createdAt) - new Date(a.createdAt)));
-    } else if(sort === 'manual'){
-      // keep existing order array property
-      arr.sort((a,b) => (a.order||0) - (b.order||0));
+    if(settings.sort === 'title'){
+      arr.sort((a,b)=> (''+a.title).localeCompare(''+b.title));
+    } else {
+      arr.sort((a,b)=> new Date(b.updatedAt) - new Date(a.updatedAt));
     }
+    // keep pinned first
+    arr.sort((a,b)=> (b.pinned - a.pinned));
     return arr;
   }
 
-  function render(){
-    renderTags();
-    const arr = filterAndSort();
-    el.pinnedNotes.innerHTML = '';
-    el.notesArea.innerHTML = '';
-
-    const pinned = arr.filter(n=>n.pinned);
-    const others = arr.filter(n=>!n.pinned);
-
-    pinned.forEach(n => el.pinnedNotes.appendChild(noteElement(n)));
-    others.forEach(n => el.notesArea.appendChild(noteElement(n)));
-
-    el.countBadge.textContent = notes.length + ' notes';
-    // highlight selected tag chips
-    Array.from(el.tagChips.children).forEach(ch => {
-      if(ch.textContent === selectedTag) ch.classList.add('active'); else ch.classList.remove('active');
-      if(selectedTag === null && ch.textContent === 'All') ch.classList.add('active');
+  function renderChips(){
+    els.tagChips.innerHTML = '';
+    if(!settings.showTags) return;
+    const all = document.createElement('button'); all.className='chip' + (selectedTag===null ? ' active' : ''); all.textContent='All';
+    all.onclick = ()=> { selectedTag = null; render(); };
+    els.tagChips.appendChild(all);
+    allTags().forEach(t => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (selectedTag===t ? ' active' : '');
+      b.textContent = t;
+      b.onclick = ()=> { selectedTag = t; render(); };
+      els.tagChips.appendChild(b);
     });
-
-    // set manualDragEnabled
-    manualDragEnabled = (el.sort.value === 'manual');
-    if(manualDragEnabled){
-      enableDragAndDrop();
-    } else {
-      disableDragAndDrop();
-    }
-    // update accent everywhere
-    applyAccent(settings.accent);
   }
 
-  // ------- Note element -------
-  function noteElement(n){
-    const wrap = document.createElement('div');
-    wrap.className = 'note';
-    wrap.setAttribute('data-id', n.id);
-    // drag attributes for manual mode
-    if(manualDragEnabled){
-      wrap.draggable = true;
-      wrap.addEventListener('dragstart', onDragStart);
-      wrap.addEventListener('dragover', onDragOver);
-      wrap.addEventListener('drop', onDrop);
-    } else {
-      wrap.draggable = false;
-      wrap.removeEventListener('dragstart', onDragStart);
+  function renderNotes(){
+    const arr = filterAndSort();
+    els.notesList.innerHTML = '';
+    if(arr.length === 0){
+      const empty = document.createElement('div');
+      empty.style.padding = '28px';
+      empty.style.textAlign = 'center';
+      empty.innerHTML = '<div style="font-weight:700;margin-bottom:6px">No notes</div><div style="color:var(--muted)">Tap + to create one</div>';
+      els.notesList.appendChild(empty);
+      return;
     }
+    arr.forEach(n => {
+      const elNote = document.createElement('div');
+      elNote.className = 'note';
+      elNote.setAttribute('data-id', n.id);
 
-    const left = document.createElement('div'); left.className='leftIcon';
-    left.textContent = n.pinned ? '📌' : (n.locked ? '🔒' : '📝');
-    wrap.appendChild(left);
+      const meta = document.createElement('div');
+      meta.className = 'meta';
 
-    const content = document.createElement('div'); content.className='content';
-    const titleRow = document.createElement('div'); titleRow.className='titleRow';
-    const title = document.createElement('div'); title.className='title';
-    title.innerHTML = highlight(n.title || (n.body||'').split(/\n/).find(Boolean) || 'Untitled', el.search.value);
-    const when = document.createElement('div'); when.className='when'; when.textContent = relTime(n.updatedAt);
-    titleRow.appendChild(title); titleRow.appendChild(when);
-    content.appendChild(titleRow);
+      const title = document.createElement('div');
+      title.className = 'title';
+      title.innerHTML = highlight(n.title || firstLine(n.body) || 'Untitled', els.search.value || '');
 
-    const prev = document.createElement('div'); prev.className='preview';
-    prev.innerHTML = highlight((n.preview || computePreview(n)), el.search.value);
-    content.appendChild(prev);
+      const preview = document.createElement('div');
+      preview.className = 'preview';
+      preview.innerHTML = highlight(previewLine(n), els.search.value || '');
 
-    if(n.tags && n.tags.length){
-      const tags = document.createElement('div'); tags.className='tags';
-      n.tags.slice(0,4).forEach(t => { const p = document.createElement('div'); p.className='tag-pill'; p.textContent = '#' + t; p.onclick = (e)=>{ e.stopPropagation(); selectedTag = t; render(); }; tags.appendChild(p); });
-      content.appendChild(tags);
-    }
-    wrap.appendChild(content);
+      meta.appendChild(title);
+      meta.appendChild(preview);
 
-    const actions = document.createElement('div'); actions.className='actions';
-    const pinBtn = document.createElement('button'); pinBtn.className='action'; pinBtn.textContent = n.pinned ? 'Unpin' : 'Pin';
-    pinBtn.onclick = (e) => { e.stopPropagation(); togglePin(n.id); };
-    const dup = document.createElement('button'); dup.className='action'; dup.textContent = 'Duplicate';
-    dup.onclick = (e) => { e.stopPropagation(); duplicate(n.id); };
-    const del = document.createElement('button'); del.className='action'; del.textContent = 'Delete';
-    del.onclick = (e) => { e.stopPropagation(); remove(n.id); };
-    const lock = document.createElement('button'); lock.className='action'; lock.textContent = n.locked ? 'Unlock' : 'Lock';
-    lock.onclick = (e) => { e.stopPropagation(); toggleLock(n.id); };
-    actions.appendChild(pinBtn); actions.appendChild(dup); actions.appendChild(lock); actions.appendChild(del);
-    wrap.appendChild(actions);
+      const right = document.createElement('div');
+      right.className = 'right';
+      const pill = document.createElement('div');
+      pill.className = 'pill';
+      pill.textContent = relTime(n.updatedAt);
+      right.appendChild(pill);
 
-    wrap.onclick = () => openNote(n.id);
-    return wrap;
+      if(n.pinned){
+        const pin = document.createElement('div');
+        pin.className = 'pill';
+        pin.textContent = 'Pinned';
+        pin.style.background = '#fff7ed';
+        pin.style.color = '#92400e';
+        right.appendChild(pin);
+      }
+      if(n.locked){
+        const lock = document.createElement('div');
+        lock.className = 'pill';
+        lock.textContent = 'Locked';
+        lock.style.background = '#fff7f7';
+        lock.style.color = '#7f1d1d';
+        right.appendChild(lock);
+      }
+
+      elNote.appendChild(meta);
+      elNote.appendChild(right);
+
+      // click to open
+      elNote.addEventListener('click', () => openEditor(n.id));
+      els.notesList.appendChild(elNote);
+    });
   }
 
-  function computePreview(n){
+  function highlight(text, q){
+    if(!q) return escapeHtml(text||'');
+    const esc = q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    return escapeHtml(text||'').replace(new RegExp(esc,'ig'), m => `<mark>${m}</mark>`);
+  }
+
+  function firstLine(s){ return (s||'').split(/\n/).find(l=>l && l.trim()) || ''; }
+  function previewLine(n){
     const lines = (n.body||'').split(/\n/).map(l=>l.trim()).filter(Boolean);
-    if((n.title||'').trim() === '' && lines.length) return lines[0];
+    if(!(n.title||'').trim()) return lines[1] || lines[0] || '';
     return lines[0] || '';
   }
 
-  // ------- CRUD -------
-  function newNote(){
-    const n = { id: id(), title:'', body:'', tags:[], pinned:false, locked:false, createdAt:now(), updatedAt:now(), order: notes.length };
-    notes.unshift(n);
-    save();
-    openNote(n.id);
-    render();
+  // Editor functions
+  function openEditor(id){
+    const note = notes.find(n => n.id === id);
+    if(!note) return;
+    if(note.locked){
+      if(!settings.pinHash){ alert('Note is locked but no PIN is set in Settings.'); return; }
+      const p = prompt('Enter PIN to unlock');
+      if(!p || !checkPin(p, settings.pinHash)){ alert('Wrong PIN'); return; }
+    }
+    currentId = id;
+    els.noteTitle.value = note.title;
+    els.noteBody.value = note.body;
+    renderEditorTags(note.tags || []);
+    setEditorButtons(note);
+    openSheet();
   }
 
-  function save(){
-    saveJSON(NOTES_KEY, notes);
+  function openNewNote(){
+    currentId = null;
+    els.noteTitle.value = '';
+    els.noteBody.value = '';
+    renderEditorTags([]);
+    setEditorButtons(null);
+    openSheet();
   }
 
-  function updateNoteFieldsFromEditor(){
-    if(!current) return;
-    const n = notes.find(x=>x.id===current);
-    if(!n) return;
-    n.title = el.title.value;
-    n.body = el.body.value;
-    n.tags = Array.from(el.tagList.children).map(c => c.getAttribute('data-tag'));
-    n.updatedAt = now();
-    save();
-    render();
+  function setEditorButtons(note){
+    const isNew = !note;
+    els.deleteBtn.style.display = isNew ? 'none' : 'inline-block';
+    els.duplicateBtn.style.display = isNew ? 'none' : 'inline-block';
+    els.pinBtn.textContent = (note && note.pinned) ? 'Unpin' : '📌';
+    els.lockBtn.textContent = (note && note.locked) ? 'Unlock' : '🔒';
+    document.getElementById('editorTitle').textContent = isNew ? 'New Note' : 'Edit Note';
   }
 
-  function saveEditor(){
-    if(!current) { // create new and save
-      const n = { id: id(), title: el.title.value, body: el.body.value, tags: Array.from(el.tagList.children).map(c=>c.dataset.tag), pinned:false, locked:false, createdAt: now(), updatedAt: now(), order: notes.length };
+  function openSheet(){ els.editorSheet.classList.add('open'); els.editorSheet.setAttribute('aria-hidden','false'); setTimeout(()=>els.noteTitle.focus(),180); }
+  function closeSheet(){ els.editorSheet.classList.remove('open'); els.editorSheet.setAttribute('aria-hidden','true'); currentId = null; }
+
+  function renderEditorTags(tags){
+    els.editorTags.innerHTML = '';
+    (tags||[]).forEach(t => {
+      const b = document.createElement('div'); b.className = 'chip'; b.textContent = t;
+      b.onclick = ()=> { b.remove(); };
+      els.editorTags.appendChild(b);
+    });
+  }
+
+  function saveFromEditor(){
+    const title = (els.noteTitle.value || '').trim();
+    const body = els.noteBody.value || '';
+    const tagEls = Array.from(els.editorTags.children);
+    const tags = tagEls.map(c => c.textContent.trim());
+    if(currentId){
+      const n = notes.find(x=>x.id === currentId);
+      if(!n) return;
+      n.title = title;
+      n.body = body;
+      n.tags = tags;
+      n.updatedAt = nowISO();
+    } else {
+      const n = { id: uid(), title, body, tags, pinned:false, locked:false, createdAt: nowISO(), updatedAt: nowISO() };
       notes.unshift(n);
-      current = n.id;
-    } else {
-      updateNoteFieldsFromEditor();
+      currentId = n.id;
     }
-    save();
-    showSnack('Saved', 2000);
+    saveNotes();
     render();
+    closeSheet();
   }
 
-  function openNote(noteId){
-    const n = notes.find(x=>x.id===noteId);
-    if(!n) return;
-    if(n.locked){
-      // require PIN
-      if(!settings.pinHash){
-        if(!confirm('This note is locked but no PIN is set. Set a PIN in Settings first.')) return;
-      } else {
-        const p = prompt('Enter PIN to unlock note:');
-        if(!p) return;
-        if(!checkPin(p, settings.pinHash)){ alert('Wrong PIN'); return; }
-      }
-    }
-    current = n.id;
-    el.title.value = n.title;
-    el.body.value = n.body;
-    renderTagList(n.tags || []);
-  }
-
-  function remove(noteId){
-    const idx = notes.findIndex(n=>n.id===noteId);
-    if(idx < 0) return;
-    lastDeleted = notes[idx];
-    notes.splice(idx,1);
-    save();
-    render();
-    showSnack('Deleted — Undo', 6000, () => {
-      if(lastDeleted){ notes.unshift(lastDeleted); lastDeleted = null; save(); render(); }
-    });
-  }
-
-  function duplicate(noteId){
-    const n = notes.find(x=>x.id===noteId);
-    if(!n) return;
-    const copy = JSON.parse(JSON.stringify(n));
-    copy.id = id();
-    copy.title = copy.title ? (copy.title + ' copy') : '';
-    copy.createdAt = now();
-    copy.updatedAt = now();
-    notes.unshift(copy);
-    save();
-    showSnack('Duplicated', 2000);
-    render();
-  }
-
-  function togglePin(noteId){
-    const n = notes.find(x=>x.id===noteId); if(!n) return;
-    n.pinned = !n.pinned; n.updatedAt = now();
-    save(); render();
-  }
-
-  function toggleLock(noteId){
-    const n = notes.find(x=>x.id===noteId); if(!n) return;
-    if(!n.locked){
-      // Lock: ensure PIN exists
-      if(!settings.pinHash){
-        const set = confirm('No PIN set. Would you like to set a PIN now?');
-        if(set){
-          const p = prompt('Enter new PIN (4-6 digits):');
-          if(!p || p.length<4) { alert('Invalid PIN'); return; }
-          settings.pinHash = pinHash(p);
-          saveJSON(SETTINGS_KEY, settings);
-        } else return;
-      }
-      n.locked = true;
-      n.updatedAt = now();
-      save(); render(); showSnack('Locked');
-    } else {
-      // Unlock needs PIN
-      if(!settings.pinHash){ n.locked = false; save(); render(); showSnack('Unlocked'); return; }
-      const p = prompt('Enter PIN to unlock:');
-      if(!p) return;
-      if(checkPin(p, settings.pinHash)){
-        n.locked = false; n.updatedAt = now(); save(); render(); showSnack('Unlocked');
-      } else {
-        alert('Wrong PIN');
-      }
-    }
-  }
-
-  // ------- Tag Editor -------
-  function renderTagList(tags){
-    el.tagList.innerHTML = '';
-    (tags || []).forEach(t => {
-      const tag = document.createElement('div'); tag.className='tag-pill'; tag.setAttribute('data-tag', t); tag.textContent = '#'+t;
-      const x = document.createElement('span'); x.textContent=' ✕'; x.style.cursor='pointer'; x.style.marginLeft='6px'; x.onclick = (e)=>{ e.stopPropagation(); tag.remove(); };
-      tag.appendChild(x);
-      el.tagList.appendChild(tag);
-    });
-  }
-
-  el.addTag.onclick = function(){
-    const v = el.tagInput.value.trim();
+  // Editor actions
+  els.addTagBtn.addEventListener('click', () => {
+    const v = (els.tagInput.value||'').trim();
     if(!v) return;
-    const exists = Array.from(el.tagList.children).some(c => c.dataset.tag.toLowerCase() === v.toLowerCase());
-    if(!exists){
-      const tag = document.createElement('div'); tag.className='tag-pill'; tag.setAttribute('data-tag', v); tag.textContent = '#'+v;
-      const x = document.createElement('span'); x.textContent=' ✕'; x.style.cursor='pointer'; x.style.marginLeft='6px'; x.onclick = ()=> tag.remove();
-      tag.appendChild(x);
-      el.tagList.appendChild(tag);
-    }
-    el.tagInput.value = '';
-  };
-  el.tagInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); el.addTag.click(); } });
+    // avoid duplicates
+    const existing = Array.from(els.editorTags.children).map(c=>c.textContent);
+    if(existing.includes(v)) { els.tagInput.value=''; return; }
+    const b = document.createElement('div'); b.className = 'chip'; b.textContent = v;
+    b.onclick = ()=> b.remove();
+    els.editorTags.appendChild(b);
+    els.tagInput.value = '';
+  });
+  els.tagInput.addEventListener('keydown', (e) => { if(e.key==='Enter'){ e.preventDefault(); els.addTagBtn.click(); } });
 
-  // ------- Editor toolbar -------
-  el.togglePreview.onclick = function(){
-    if(el.preview.style.display === 'none' || el.preview.style.display === ''){
-      el.preview.innerHTML = simpleMarkdown(el.body.value);
-      el.preview.style.display = 'block';
-      el.body.style.display = 'none';
-      el.togglePreview.textContent = 'Editor';
-    } else {
-      el.preview.style.display = 'none';
-      el.body.style.display = 'block';
-      el.togglePreview.textContent = 'Preview';
-    }
-  };
+  els.saveNote.addEventListener('click', saveFromEditor);
+  els.closeEditor.addEventListener('click', closeSheet);
 
-  el.checklist.onclick = function(){
-    const s = el.body.value;
-    const lines = s.split('\n');
-    if(lines.length && lines.filter(l=>l.trim().startsWith('- [')).length / Math.max(1,lines.length) > 0.5){
-      // remove checklist
-      el.body.value = lines.map(l => l.replace(/^- \[[xX ]\] /,'')).join('\n');
-    } else {
-      el.body.value = lines.map(l => l.trim()? '- [ ] '+l : l).join('\n');
-    }
-  };
-
-  el.timestamp.onclick = function(){
-    const t = new Date().toLocaleString();
-    el.body.value = (el.body.value ? (el.body.value + '\n' + t) : t);
-  };
-
-  el.save.onclick = function(){
-    saveEditor();
-  };
-
-  // ------- Export/Import -------
-  el.exportBtn.onclick = function(){
-    const data = JSON.stringify({ notes, settings }, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'notes_plus_export.json'; a.click();
-    URL.revokeObjectURL(url);
-  };
-  el.importBtn.onclick = ()=> el.importInput.click();
-  el.importInput.onchange = function(e){
-    const f = e.target.files[0];
-    if(!f) return;
-    const r = new FileReader();
-    r.onload = function(){ try { const data = JSON.parse(r.result); if(data.notes) notes = data.notes; if(data.settings) settings = Object.assign(settings, data.settings); saveJSON(NOTES_KEY, notes); saveJSON(SETTINGS_KEY, settings); render(); showSnack('Imported'); } catch(err){ alert('Invalid file'); } };
-    r.readAsText(f);
-  };
-
-  el.resetBtn.onclick = function(){
-    if(!confirm('Reset to sample notes? This will replace your notes.')) return;
-    notes = JSON.parse(JSON.stringify(SEED));
-    save(); render(); showSnack('Reset to sample');
-  };
-
-  el.clearData.onclick = function(){
-    if(!confirm('Clear all local data? This cannot be undone.')) return;
-    localStorage.removeItem(NOTES_KEY);
-    localStorage.removeItem(SETTINGS_KEY);
-    notes = JSON.parse(JSON.stringify(SEED));
-    settings = { accent: '#2563eb', showTags:true };
-    saveJSON(SETTINGS_KEY, settings);
-    save(); render(); showSnack('Cleared local data');
-  };
-
-  // ------- PIN Settings -------
-  el.setPin.onclick = function(){
-    const p = el.pinInput.value.trim();
-    if(!p || p.length < 4){ alert('PIN should be 4+ characters'); return; }
-    settings.pinHash = pinHash(p);
-    saveJSON(SETTINGS_KEY, settings);
-    el.pinInput.value = '';
-    showSnack('PIN saved');
-  };
-
-  // ------- Accent color -------
-  el.accentColor.oninput = function(){
-    settings.accent = el.accentColor.value;
-    saveJSON(SETTINGS_KEY, settings);
-    applyAccent(settings.accent);
-  };
-  function applyAccent(color){
-    document.documentElement.style.setProperty('--accent', color);
-    // mixing second color gradient
-    try {
-      const darker = shadeColor(color, -20);
-      document.documentElement.style.setProperty('--accent-2', darker);
-    } catch(e){}
-  }
-  // utility to darken/lighten hex
-  function shadeColor(hex, percent) {
-    let c = hex.replace('#','');
-    if(c.length===3) c = c.split('').map(x=>x+x).join('');
-    const num = parseInt(c,16);
-    const r = clamp(Math.floor((num >> 16) + percent),0,255);
-    const g = clamp(Math.floor(((num >> 8) & 0x00FF) + percent),0,255);
-    const b = clamp(Math.floor((num & 0x0000FF) + percent),0,255);
-    return '#' + ( (r<<16) | (g<<8) | b ).toString(16).padStart(6,'0');
-  }
-
-  // ------- Search & keyboard -------
-  el.search.addEventListener('input', () => render());
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'n' && !e.metaKey && !e.ctrlKey){ e.preventDefault(); newNote(); el.title.focus(); }
-    if(e.key === '/' && !e.metaKey && !e.ctrlKey){ e.preventDefault(); el.search.focus(); }
-    if(e.key === 'Escape'){ if(current) { current = null; el.title.value=''; el.body.value=''; renderTagList([]); } else { el.search.blur(); } }
+  els.deleteBtn.addEventListener('click', () => {
+    if(!currentId) return;
+    if(!confirm('Delete this note?')) return;
+    notes = notes.filter(n=>n.id !== currentId);
+    saveNotes();
+    render();
+    closeSheet();
   });
 
-  // ------- Drag & Drop for manual order -------
-  let dragSrc = null;
-  function enableDragAndDrop(){
-    // add draggable attributes on note elements (done in render)
-  }
-  function disableDragAndDrop(){
-    // nothing special
-  }
-  function onDragStart(e){
-    dragSrc = e.currentTarget;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', dragSrc.dataset.id);
-    dragSrc.style.opacity = '0.4';
-  }
-  function onDragOver(e){
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  }
-  function onDrop(e){
-    e.preventDefault();
-    const target = e.currentTarget;
-    const srcId = e.dataTransfer.getData('text/plain');
-    const dstId = target.dataset.id;
-    if(srcId === dstId) return;
-    const srcIdx = notes.findIndex(n=>n.id===srcId);
-    const dstIdx = notes.findIndex(n=>n.id===dstId);
-    if(srcIdx < 0 || dstIdx < 0) return;
-    // reorder: remove src, insert before dst
-    const [src] = notes.splice(srcIdx,1);
-    const insertAt = dstIdx < srcIdx ? dstIdx : dstIdx + 1;
-    notes.splice(insertAt, 0, src);
-    // update order fields
-    notes.forEach((n,i)=> n.order = i);
-    save(); render();
-  }
+  els.duplicateBtn.addEventListener('click', () => {
+    if(!currentId) return;
+    const n = notes.find(x=>x.id===currentId);
+    if(!n) return;
+    const copy = JSON.parse(JSON.stringify(n));
+    copy.id = uid(); copy.title = copy.title ? copy.title + ' copy' : '';
+    copy.createdAt = nowISO(); copy.updatedAt = nowISO();
+    notes.unshift(copy);
+    saveNotes();
+    render();
+    closeSheet();
+  });
 
-  // ------- Undo snack -------
-  function showSnack(text, duration=3000, action){
-    el.snack.style.display = 'flex';
-    el.snack.innerHTML = '';
-    const t = document.createElement('div'); t.textContent = text;
-    el.snack.appendChild(t);
-    if(action){
-      const btn = document.createElement('button'); btn.className='btnPrimary small'; btn.textContent='Undo';
-      btn.onclick = () => { action(); el.snack.style.display='none'; };
-      el.snack.appendChild(btn);
+  els.pinBtn.addEventListener('click', () => {
+    if(!currentId){ // toggles for new note only toggles UI state
+      const isPinned = els.pinBtn.getAttribute('data-pinned') === '1';
+      els.pinBtn.setAttribute('data-pinned', isPinned ? '0' : '1');
+      els.pinBtn.textContent = isPinned ? '📌' : 'Unpin';
+      return;
     }
-    setTimeout(()=> { el.snack.style.display = 'none'; }, duration);
+    const n = notes.find(x=>x.id===currentId); if(!n) return;
+    n.pinned = !n.pinned; n.updatedAt = nowISO(); saveNotes(); setEditorButtons(n); render();
+  });
+
+  els.lockBtn.addEventListener('click', () => {
+    if(!currentId){
+      alert('You can lock saved notes only. Save the note first then lock it.');
+      return;
+    }
+    const n = notes.find(x=>x.id===currentId); if(!n) return;
+    if(!n.locked){
+      if(!settings.pinHash){ if(!confirm('No PIN set. Set one in Settings first.')) return; }
+      if(settings.pinHash){
+        n.locked = true; n.updatedAt = nowISO(); saveNotes(); setEditorButtons(n); render();
+      }
+    } else {
+      const p = prompt('Enter PIN to unlock');
+      if(!p) return;
+      if(checkPin(p, settings.pinHash)){ n.locked = false; n.updatedAt = nowISO(); saveNotes(); setEditorButtons(n); render(); }
+      else alert('Wrong PIN');
+    }
+  });
+
+  // Create new note
+  els.fab.addEventListener('click', openNewNote);
+
+  // Search
+  els.search.addEventListener('input', () => render());
+
+  // Settings toggle
+  els.settingsToggle.addEventListener('click', () => {
+    els.settingsPanel.classList.toggle('open');
+  });
+  els.closeSettings.addEventListener('click', () => { els.settingsPanel.classList.remove('open'); });
+
+  els.accentColor.addEventListener('input', (e) => {
+    settings.accent = e.target.value;
+    document.documentElement.style.setProperty('--accent', settings.accent);
+    saveSettings();
+  });
+
+  els.savePin.addEventListener('click', () => {
+    const p = (els.pinInput.value || '').trim();
+    if(!p || p.length < 4){ alert('Enter a PIN with 4 or more characters'); return; }
+    settings.pinHash = pinHash(p);
+    saveSettings();
+    els.pinInput.value = '';
+    alert('PIN saved (browser storage, not secure).');
+  });
+  els.clearPin.addEventListener('click', () => {
+    if(confirm('Clear saved PIN?')){ settings.pinHash = null; saveSettings(); alert('PIN cleared'); }
+  });
+
+  // Tag chips click (rendered in renderChips)
+  // Initial render
+  function render(){
+    renderChips();
+    renderNotes();
   }
 
-  // ------- Open/close helper -------
-  function showSnackMessage(m){ showSnack(m,2000); }
+  // Utilities used above
+  function nowISO(){ return new Date().toISOString(); }
 
-  // ------- Misc actions -------
-  function duplicate(noteId){ duplicate(noteId); } // placeholder to keep code consistent
-
-  // ------- initialize UI state -------
-  function init(){
-    render();
-    // attach few more handlers
-    el.newNote.onclick = () => newNote();
-    el.fab.onclick = () => { newNote(); };
-    el.sort.onchange = function(){ settings.sort = el.sort.value; saveJSON(SETTINGS_KEY, settings); render(); };
-    el.showTags.onchange = function(){ settings.showTags = el.showTags.checked; saveJSON(SETTINGS_KEY, settings); render(); };
-    el.clearFilter.onclick = function(){ selectedTag = null; el.search.value = ''; render(); };
-    // auto-save draft on title/body change
-    el.title.addEventListener('input', debounce(() => updateNoteFieldsFromEditor(), 500));
-    el.body.addEventListener('input', debounce(() => updateNoteFieldsFromEditor(), 700));
-    render();
+  // highlight helper repeated here (local)
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+  function relTime(iso){
+    const d = new Date(iso), diff = Math.floor((Date.now()-d)/1000);
+    if(diff<60) return diff+'s';
+    if(diff<3600) return Math.floor(diff/60)+'m';
+    if(diff<86400) return Math.floor(diff/3600)+'h';
+    return d.toLocaleDateString();
   }
 
-  // ------- helpers -------
-  function debounce(fn, wait){ let t; return function(...a){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,a), wait); }; }
+  // initialize
+  render();
 
-  // restore preview toggle state to default (editor)
-  el.preview.style.display = 'none';
-  el.body.style.display = 'block';
-
-  // run init
-  init();
-
-  // expose save button to enable "save" when no current note selected (saves new)
-  // Also wire delete/duplicate functions to external declared functions
-  window.duplicate = function(id){ const n = notes.find(x=>x.id===id); if(!n) return; const copy = JSON.parse(JSON.stringify(n)); copy.id = id(); copy.title = copy.title ? copy.title + ' copy' : ''; copy.createdAt = now(); copy.updatedAt = now(); notes.unshift(copy); save(); render(); showSnack('Duplicated'); };
-  window.remove = remove;
+  // make sheet draggable by handle (simple)
+  (function sheetDrag(){
+    const sheet = els.editorSheet;
+    const handle = sheet.querySelector('.handle');
+    if(!handle) return;
+    let startY = 0, startBottom = 0, dragging=false;
+    handle.addEventListener('touchstart', e => {
+      dragging = true;
+      startY = e.touches[0].clientY;
+      startBottom = parseFloat(getComputedStyle(sheet).bottom);
+    });
+    handle.addEventListener('touchmove', e => {
+      if(!dragging) return;
+      const dy = e.touches[0].clientY - startY;
+      const newBottom = Math.min(0, startBottom - dy);
+      sheet.style.bottom = (newBottom) + 'px';
+    });
+    handle.addEventListener('touchend', e => {
+      dragging = false;
+      if(parseFloat(sheet.style.bottom) < -120) closeSheet();
+      else sheet.style.bottom = '0';
+    });
+  })();
 
 })();
 </script>
