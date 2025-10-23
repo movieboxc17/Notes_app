@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Notes (Converted)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="left">
+        <h1>Notes</h1>
+        <div class="controls">
+          <select id="sortSelect" title="Sort notes">
+            <option value="recent">Recent</option>
+            <option value="title">Title A–Z</option>
+            <option value="created">Date Created</option>
+          </select>
+          <button id="settingsBtn" title="Settings">⚙️</button>
+        </div>
+      </div>
+
+      <div class="right">
+        <input id="searchInput" type="search" placeholder="Search notes..." />
+        <button id="newNoteBtn" title="New Note">✚</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <aside class="sidebar">
+        <div id="tagChips" class="tag-chips"></div>
+
+        <div id="notesContainer" class="notes-container"></div>
+
+        <div class="empty-actions" id="emptyActions" hidden>
+          <p class="empty-title">No Notes Yet</p>
+          <p class="empty-sub">Tap the compose button to create your first note.</p>
+          <button id="emptyNewBtn">New Note</button>
+        </div>
+      </aside>
+
+      <section class="editor-area">
+        <!-- Editor modal -->
+        <div id="editorModal" class="modal" hidden>
+          <div class="modal-content">
+            <header class="modal-header">
+              <button id="doneEditBtn">Done</button>
+              <div class="modal-actions">
+                <button id="lockBtn">Lock</button>
+                <button id="duplicateBtn">Duplicate</button>
+                <button id="shareBtn">Share</button>
+                <button id="deleteBtn" class="danger">Delete</button>
+              </div>
+            </header>
+
+            <div class="editor-body">
+              <input id="noteTitle" class="note-title" placeholder="Title" />
+              <div class="tag-editor">
+                <div id="noteTagList" class="note-tags"></div>
+                <input id="addTagInput" placeholder="Add tag" />
+                <button id="addTagBtn">➕</button>
+              </div>
+
+              <textarea id="noteBody" class="note-body" placeholder="Note"></textarea>
+
+              <div class="toolbar">
+                <button id="toggleChecklistBtn">Checklist</button>
+                <button id="insertItemBtn">Add Item</button>
+                <button id="insertTimestampBtn">Timestamp</button>
+                <button id="trimBtn">Trim</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings modal -->
+        <div id="settingsModal" class="modal" hidden>
+          <div class="modal-content small">
+            <header class="modal-header">
+              <h2>Settings</h2>
+              <button id="closeSettingsBtn">Close</button>
+            </header>
+
+            <div class="settings-body">
+              <label><input type="checkbox" id="useCardsChk" /> Card-style rows</label>
+
+              <label>Row density
+                <select id="densitySelect">
+                  <option value="compact">Compact</option>
+                  <option value="comfortable" selected>Comfortable</option>
+                  <option value="spacious">Spacious</option>
+                </select>
+              </label>
+
+              <label>Accent color
+                <select id="accentSelect">
+                  <option value="system">System</option>
+                  <option value="blue">Blue</option>
+                  <option value="purple">Purple</option>
+                  <option value="pink">Pink</option>
+                  <option value="orange">Orange</option>
+                  <option value="green">Green</option>
+                  <option value="teal">Teal</option>
+                  <option value="indigo">Indigo</option>
+                </select>
+              </label>
+
+              <label><input type="checkbox" id="showTagChipsChk" checked /> Show tag filter chips</label>
+
+              <hr />
+
+              <button id="resetSampleBtn" class="danger">Reset to Sample Notes</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simple share fallback -->
+        <div id="shareModal" class="modal" hidden>
+          <div class="modal-content small">
+            <header class="modal-header">
+              <h3>Share</h3>
+              <button id="closeShareBtn">Close</button>
+            </header>
+            <textarea id="shareText" readonly></textarea>
+            <div style="text-align:right"><button id="copyShareBtn">Copy</button></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="floating">
+      <button id="floatingNewBtn" class="fab">＋</button>
+    </footer>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
