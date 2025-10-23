@@ -1,139 +1,846 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Notes (Converted)</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Notes App (Single File)</title>
+<style>
+  :root{
+    --bg: #f7f7fb;
+    --card: #ffffff;
+    --muted: #6b7280;
+    --accent: #2563eb; /* default blue */
+    --radius: 12px;
+    --shadow: 0 6px 18px rgba(18, 23, 39, 0.06);
+    --pill: rgba(16, 24, 40, 0.04);
+  }
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+  body{background:linear-gradient(180deg, #ffffff 0%, var(--bg) 100%); color:#0f172a; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+  .app {
+    max-width:1000px;
+    margin:28px auto;
+    padding:20px;
+    display:flex;
+    gap:20px;
+    align-items:flex-start;
+  }
+
+  /* Sidebar / controls */
+  .panel {
+    width:320px;
+    min-width:260px;
+    background:transparent;
+  }
+  .header {
+    display:flex; gap:8px; align-items:center; justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .title {font-weight:700; font-size:20px;}
+  .controls {display:flex; gap:8px; align-items:center;}
+  .btn {
+    background:var(--card);
+    border-radius:10px;
+    padding:8px 10px;
+    display:inline-flex; align-items:center; gap:8px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(15,23,42,0.04);
+    cursor:pointer;
+  }
+  .btn.icon {padding:8px; width:40px; height:40px; justify-content:center;}
+  .search {
+    margin-bottom:12px;
+  }
+  .search input {
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid rgba(15,23,42,0.06);
+    background:var(--card);
+  }
+
+  .tag-chips {
+    display:flex; gap:8px; flex-wrap:nowrap; overflow:auto; padding:6px 0; margin-bottom:10px;
+  }
+  .chip {
+    font-size:13px; padding:6px 10px; border-radius:999px;
+    background:var(--pill); color:var(--muted); cursor:pointer; white-space:nowrap;
+    border:1px solid transparent;
+  }
+  .chip.active { background: rgba(37,99,235,0.08); color:var(--accent); font-weight:600; border-color:rgba(37,99,235,0.12) }
+
+  /* List */
+  .list {
+    flex:1;
+    background:transparent;
+  }
+  .section {
+    margin-bottom:18px;
+  }
+  .section .heading {
+    font-size:11px; font-weight:700; color:var(--muted); letter-spacing:0.08em; margin:6px 0 6px 4px;
+  }
+  .note-row {
+    display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:12px;
+    background:var(--card); margin-bottom:8px; box-shadow:var(--shadow); border:1px solid rgba(15,23,42,0.04);
+    cursor:pointer; transition:transform .12s ease;
+  }
+  .note-row:hover{ transform:translateY(-2px) }
+  .pin { color:#f97316; margin-top:2px; font-size:16px; }
+  .note-main { flex:1; min-width:0;}
+  .note-title { font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; gap:8px; align-items:center;}
+  .note-time { margin-left:auto; font-size:12px; color:var(--muted); font-weight:500; }
+  .note-preview { font-size:13px; color:#334155; margin-top:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; }
+  .note-meta { margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .tag-pill { font-size:12px; padding:5px 8px; border-radius:999px; background:rgba(148,163,184,0.10); color:#334155; }
+  .locked { font-size:12px; color:var(--muted); display:inline-flex; gap:6px; align-items:center; }
+
+  /* Floating new button */
+  .fab {
+    position:fixed; right:28px; bottom:28px; width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(45deg,var(--accent), color-mix(in srgb, var(--accent) 70%, white));
+    box-shadow:0 10px 30px rgba(15,23,42,0.18); display:flex; align-items:center; justify-content:center; color:white; font-size:22px; cursor:pointer; border:none;
+  }
+
+  /* Editor modal */
+  .modal {
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:40;
+    background:linear-gradient(180deg, rgba(2,6,23,0.35), rgba(2,6,23,0.2));
+    padding:20px;
+  }
+  .modal.open { display:flex; }
+  .editor {
+    width:min(920px,96%); max-height:92vh; overflow:auto; border-radius:14px; background:var(--card); box-shadow:0 20px 60px rgba(2,6,23,0.3);
+    padding:16px; display:flex; flex-direction:column; gap:12px;
+  }
+  .editor .title-input { font-size:20px; padding:8px 10px; border-radius:10px; border:1px solid rgba(15,23,42,0.06); }
+  .editor .toolbar { display:flex; gap:8px; align-items:center; }
+  .editor textarea { resize:vertical; min-height:200px; padding:12px; border-radius:10px; border:1px solid rgba(15,23,42,0.06); font-size:14px; line-height:1.5; }
+  .editor .tag-editor { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .tag-editor .tag { background:var(--pill); padding:6px 8px; border-radius:999px; display:inline-flex; gap:6px; align-items:center; font-size:13px; }
+  .editor .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+
+  /* Settings */
+  .settings-panel { width:360px; background:var(--card); padding:12px; border-radius:12px; box-shadow:var(--shadow); border:1px solid rgba(15,23,42,0.04) }
+  .settings-panel label { display:block; font-size:13px; margin-bottom:6px; color:var(--muted) }
+  .row { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+
+  /* small screen adjustments */
+  @media (max-width:900px){
+    .app{flex-direction:column; padding:16px;}
+    .panel{width:100%}
+    .list{width:100%}
+    .settings-panel{width:100%}
+  }
+
+  mark { background: rgba(250, 219, 78, 0.35); padding:0 2px; border-radius:3px; }
+</style>
 </head>
 <body>
-  <div id="app">
-    <header class="topbar">
-      <div class="left">
-        <h1>Notes</h1>
-        <div class="controls">
-          <select id="sortSelect" title="Sort notes">
-            <option value="recent">Recent</option>
-            <option value="title">Title A–Z</option>
-            <option value="created">Date Created</option>
-          </select>
-          <button id="settingsBtn" title="Settings">⚙️</button>
-        </div>
+<div class="app" id="app">
+  <div class="panel">
+    <div class="header">
+      <div class="title">Notes</div>
+      <div class="controls">
+        <button class="btn icon" id="settingsBtn" title="Settings">⚙️</button>
+        <button class="btn icon" id="newBtn" title="New Note">✚</button>
       </div>
+    </div>
 
-      <div class="right">
-        <input id="searchInput" type="search" placeholder="Search notes..." />
-        <button id="newNoteBtn" title="New Note">✚</button>
+    <div class="search">
+      <input id="searchInput" placeholder="Search notes or tags…" />
+    </div>
+
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+      <select id="sortSelect" class="btn" style="padding:8px 12px;">
+        <option value="recent">Recent</option>
+        <option value="title">Title A–Z</option>
+        <option value="created">Date Created</option>
+      </select>
+      <button class="btn" id="clearFilterBtn">Clear Tag</button>
+    </div>
+
+    <div class="tag-chips" id="tagChips" aria-hidden="false">
+      <!-- tags injected here -->
+    </div>
+
+    <div style="margin-top:8px;">
+      <div id="emptyState" style="display:none; text-align:center; padding:18px; background:var(--card); border-radius:14px; box-shadow:var(--shadow);">
+        <div style="font-size:22px; font-weight:700; margin-bottom:6px;">No Notes Yet</div>
+        <div style="color:var(--muted); margin-bottom:12px;">Tap the compose button to create your first note.</div>
+        <button class="btn" id="emptyNewBtn">New Note</button>
       </div>
-    </header>
-
-    <main class="main">
-      <aside class="sidebar">
-        <div id="tagChips" class="tag-chips"></div>
-
-        <div id="notesContainer" class="notes-container"></div>
-
-        <div class="empty-actions" id="emptyActions" hidden>
-          <p class="empty-title">No Notes Yet</p>
-          <p class="empty-sub">Tap the compose button to create your first note.</p>
-          <button id="emptyNewBtn">New Note</button>
-        </div>
-      </aside>
-
-      <section class="editor-area">
-        <!-- Editor modal -->
-        <div id="editorModal" class="modal" hidden>
-          <div class="modal-content">
-            <header class="modal-header">
-              <button id="doneEditBtn">Done</button>
-              <div class="modal-actions">
-                <button id="lockBtn">Lock</button>
-                <button id="duplicateBtn">Duplicate</button>
-                <button id="shareBtn">Share</button>
-                <button id="deleteBtn" class="danger">Delete</button>
-              </div>
-            </header>
-
-            <div class="editor-body">
-              <input id="noteTitle" class="note-title" placeholder="Title" />
-              <div class="tag-editor">
-                <div id="noteTagList" class="note-tags"></div>
-                <input id="addTagInput" placeholder="Add tag" />
-                <button id="addTagBtn">➕</button>
-              </div>
-
-              <textarea id="noteBody" class="note-body" placeholder="Note"></textarea>
-
-              <div class="toolbar">
-                <button id="toggleChecklistBtn">Checklist</button>
-                <button id="insertItemBtn">Add Item</button>
-                <button id="insertTimestampBtn">Timestamp</button>
-                <button id="trimBtn">Trim</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Settings modal -->
-        <div id="settingsModal" class="modal" hidden>
-          <div class="modal-content small">
-            <header class="modal-header">
-              <h2>Settings</h2>
-              <button id="closeSettingsBtn">Close</button>
-            </header>
-
-            <div class="settings-body">
-              <label><input type="checkbox" id="useCardsChk" /> Card-style rows</label>
-
-              <label>Row density
-                <select id="densitySelect">
-                  <option value="compact">Compact</option>
-                  <option value="comfortable" selected>Comfortable</option>
-                  <option value="spacious">Spacious</option>
-                </select>
-              </label>
-
-              <label>Accent color
-                <select id="accentSelect">
-                  <option value="system">System</option>
-                  <option value="blue">Blue</option>
-                  <option value="purple">Purple</option>
-                  <option value="pink">Pink</option>
-                  <option value="orange">Orange</option>
-                  <option value="green">Green</option>
-                  <option value="teal">Teal</option>
-                  <option value="indigo">Indigo</option>
-                </select>
-              </label>
-
-              <label><input type="checkbox" id="showTagChipsChk" checked /> Show tag filter chips</label>
-
-              <hr />
-
-              <button id="resetSampleBtn" class="danger">Reset to Sample Notes</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Simple share fallback -->
-        <div id="shareModal" class="modal" hidden>
-          <div class="modal-content small">
-            <header class="modal-header">
-              <h3>Share</h3>
-              <button id="closeShareBtn">Close</button>
-            </header>
-            <textarea id="shareText" readonly></textarea>
-            <div style="text-align:right"><button id="copyShareBtn">Copy</button></div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="floating">
-      <button id="floatingNewBtn" class="fab">＋</button>
-    </footer>
+    </div>
   </div>
 
-  <script src="app.js" defer></script>
+  <div class="list" id="notesList">
+    <!-- notes go here -->
+  </div>
+</div>
+
+<button class="fab" id="fabBtn" title="New Note">+</button>
+
+<!-- Editor Modal -->
+<div class="modal" id="editorModal" aria-hidden="true">
+  <div class="editor" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+    <input id="noteTitle" class="title-input" placeholder="Title" />
+    <div class="tag-editor">
+      <div id="tagList" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+      <input id="tagInput" placeholder="Add tag" style="padding:6px 8px; border-radius:8px; border:1px solid rgba(15,23,42,0.06);" />
+      <button class="btn" id="addTagBtn">➕</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn" id="toggleChecklistBtn">Checklist</button>
+      <button class="btn" id="insertChecklistItemBtn">Add Item</button>
+      <button class="btn" id="insertTimestampBtn">Timestamp</button>
+      <button class="btn" id="trimBtn">Trim</button>
+      <label style="margin-left:auto; color:var(--muted); font-size:13px;"><input type="checkbox" id="lockedCheckbox"> Locked</label>
+    </div>
+
+    <textarea id="noteBody" placeholder="Note"></textarea>
+
+    <div class="actions">
+      <button class="btn" id="duplicateBtn">Duplicate</button>
+      <button class="btn" id="shareBtn">Share</button>
+      <button class="btn" id="deleteBtn" style="background: #fff3f2; border-color: #fee2e2;">Delete</button>
+      <button class="btn" id="saveBtn" style="background:var(--accent); color:white;">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Panel (slide-over simulation) -->
+<div class="modal" id="settingsModal" aria-hidden="true">
+  <div class="settings-panel">
+    <h3 style="margin-top:0">Settings</h3>
+    <div class="row">
+      <label style="flex:1">Accent color</label>
+      <select id="accentSelect">
+        <option value="system">System (Blue)</option>
+        <option value="#2563eb">Blue</option>
+        <option value="#7c3aed">Purple</option>
+        <option value="#ec4899">Pink</option>
+        <option value="#fb923c">Orange</option>
+        <option value="#16a34a">Green</option>
+        <option value="#0891b2">Teal</option>
+        <option value="#4f46e5">Indigo</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label style="flex:1">Row density</label>
+      <select id="densitySelect">
+        <option value="comfortable">Comfortable</option>
+        <option value="compact">Compact</option>
+        <option value="spacious">Spacious</option>
+      </select>
+    </div>
+
+    <div class="row" style="align-items:center">
+      <label style="flex:1">Show tag chips</label>
+      <input type="checkbox" id="showTagsCheckbox" />
+    </div>
+
+    <hr/>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button class="btn" id="resetSeedBtn" style="background:#fff; border:1px solid rgba(15,23,42,0.04)">Reset to Sample</button>
+      <button class="btn" id="closeSettingsBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  Notes App - Single-file JS version
+  Features:
+   - Create / edit / delete / duplicate notes
+   - Pin, lock (simple passwordless auth simulation), tags
+   - Search, sort, filter by tag
+   - Settings persisted in localStorage (accent, density, show tags)
+   - Persistence of notes in localStorage
+   - Editor toolbar: checklist toggle, insert item, timestamp, trim
+*/
+
+(() => {
+  // ===== Utilities =====
+  const STORAGE_KEY = 'notes_app_notes_v1';
+  const SETTINGS_KEY = 'notes_app_settings_v1';
+
+  function uuidv4(){
+    // simple uuid
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random()*16|0, v = c=='x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+    });
+  }
+
+  function nowISO(){ return (new Date()).toISOString(); }
+  function fromISO(s){ return new Date(s); }
+
+  function formatRelative(date){
+    const d = new Date(date);
+    const diff = (Date.now() - d.getTime())/1000;
+    if(diff < 60) return Math.floor(diff) + 's';
+    if(diff < 3600) return Math.floor(diff/60) + 'm';
+    if(diff < 3600*24) return Math.floor(diff/3600) + 'h';
+    const days = Math.floor(diff/(3600*24));
+    if(days < 7) return days + 'd';
+    return d.toLocaleDateString();
+  }
+
+  function highlight(text, q){
+    if(!q) return escapeHtml(text);
+    const escQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(escQ, 'ig');
+    return escapeHtml(text).replace(re, m => `<mark>${m}</mark>`);
+  }
+
+  function escapeHtml(s){
+    return (s+'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+  }
+
+  // ===== Model & Store =====
+  const defaultSeed = [
+    {
+      id: uuidv4(),
+      title: "Welcome to Notes",
+      body: "This is your first note.\n\n- Tap + to create a note\n- Use the editor toolbar for checklist, tags, timestamp",
+      tags: ["welcome"],
+      pinned: true,
+      locked: false,
+      createdAt: nowISO(),
+      updatedAt: nowISO()
+    },
+    {
+      id: uuidv4(),
+      title: "Checklist example",
+      body: "- [ ] Buy milk\n- [x] Check mail\n- [ ] Plan weekend",
+      tags: ["todo"],
+      pinned: false,
+      locked: false,
+      createdAt: nowISO(),
+      updatedAt: nowISO()
+    }
+  ];
+
+  function loadNotes(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return [...defaultSeed];
+      const arr = JSON.parse(raw);
+      return arr;
+    }catch(e){ console.error(e); return [...defaultSeed]; }
+  }
+  function saveNotes(notes){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  }
+
+  function loadSettings(){
+    const def = { accent: 'system', density: 'comfortable', showTagChips: true, useCards: true, sort: 'recent' };
+    try{
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if(!raw) return def;
+      return Object.assign(def, JSON.parse(raw));
+    }catch(e){ return def; }
+  }
+  function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+
+  // ===== App State =====
+  let notes = loadNotes();
+  let settings = loadSettings();
+  let searchQuery = '';
+  let selectedTagFilter = null;
+  let editingNoteId = null;
+
+  // ===== DOM Elements =====
+  const notesList = document.getElementById('notesList');
+  const tagChips = document.getElementById('tagChips');
+  const searchInput = document.getElementById('searchInput');
+  const sortSelect = document.getElementById('sortSelect');
+  const newBtn = document.getElementById('newBtn');
+  const fabBtn = document.getElementById('fabBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const editorModal = document.getElementById('editorModal');
+  const noteTitle = document.getElementById('noteTitle');
+  const noteBody = document.getElementById('noteBody');
+  const tagList = document.getElementById('tagList');
+  const tagInput = document.getElementById('tagInput');
+  const addTagBtn = document.getElementById('addTagBtn');
+  const toggleChecklistBtn = document.getElementById('toggleChecklistBtn');
+  const insertChecklistItemBtn = document.getElementById('insertChecklistItemBtn');
+  const insertTimestampBtn = document.getElementById('insertTimestampBtn');
+  const trimBtn = document.getElementById('trimBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
+  const duplicateBtn = document.getElementById('duplicateBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const lockedCheckbox = document.getElementById('lockedCheckbox');
+  const settingsModal = document.getElementById('settingsModal');
+  const accentSelect = document.getElementById('accentSelect');
+  const densitySelect = document.getElementById('densitySelect');
+  const showTagsCheckbox = document.getElementById('showTagsCheckbox');
+  const resetSeedBtn = document.getElementById('resetSeedBtn');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const clearFilterBtn = document.getElementById('clearFilterBtn');
+  const emptyState = document.getElementById('emptyState');
+  const emptyNewBtn = document.getElementById('emptyNewBtn');
+
+  // ===== Helpers =====
+  function sortNotes(arr){
+    const s = settings.sort || 'recent';
+    const clone = [...arr];
+    const byPinned = (a,b) => (a.pinned === b.pinned) ? 0 : (a.pinned ? -1 : 1);
+    if(s === 'recent'){
+      clone.sort((a,b) => {
+        const p = byPinned(a,b); if(p!==0) return p;
+        return new Date(b.updatedAt) - new Date(a.updatedAt);
+      });
+    } else if(s === 'title'){
+      clone.sort((a,b) => {
+        const p = byPinned(a,b); if(p!==0) return p;
+        return a.title.trim().toLowerCase().localeCompare(b.title.trim().toLowerCase());
+      });
+    } else if(s === 'created'){
+      clone.sort((a,b) => {
+        const p = byPinned(a,b); if(p!==0) return p;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+    }
+    return clone;
+  }
+
+  function filteredAndSorted(){
+    const q = (searchQuery||'').trim().toLowerCase();
+    let arr = notes.filter(n => {
+      if(!q) return true;
+      return (n.title||'').toLowerCase().includes(q) ||
+             (n.body||'').toLowerCase().includes(q) ||
+             (n.tags||[]).some(t => t.toLowerCase().includes(q));
+    });
+    if(selectedTagFilter){
+      arr = arr.filter(n => (n.tags||[]).some(t => t.toLowerCase() === selectedTagFilter.toLowerCase()));
+    }
+    return sortNotes(arr);
+  }
+
+  function allTags(){
+    const s = new Set();
+    notes.forEach(n => (n.tags||[]).forEach(t => { const tt = (t||'').trim(); if(tt) s.add(tt); }));
+    return Array.from(s).sort((a,b)=>a.localeCompare(b));
+  }
+
+  function saveAndRender(){
+    saveNotes(notes);
+    render();
+  }
+
+  // ===== Rendering =====
+  function render(){
+    // settings -> CSS variables
+    applySettingsToCSS();
+
+    // tags
+    tagChips.innerHTML = '';
+    if(settings.showTagChips){
+      const chipAll = document.createElement('button');
+      chipAll.className = 'chip' + (selectedTagFilter==null ? ' active' : '');
+      chipAll.textContent = 'All';
+      chipAll.onclick = () => { selectedTagFilter = null; render(); };
+      tagChips.appendChild(chipAll);
+
+      allTags().forEach(t => {
+        const b = document.createElement('button');
+        b.className = 'chip' + (selectedTagFilter===t ? ' active' : '');
+        b.textContent = t;
+        b.onclick = () => { selectedTagFilter = t; render(); };
+        tagChips.appendChild(b);
+      });
+    }
+
+    // notes list
+    const items = filteredAndSorted();
+    notesList.innerHTML = '';
+
+    if(notes.length === 0 && !searchQuery){
+      emptyState.style.display = 'block';
+    } else {
+      emptyState.style.display = 'none';
+    }
+
+    // pinned section
+    if(items.some(n => n.pinned)){
+      const sec = document.createElement('div'); sec.className='section';
+      const h = document.createElement('div'); h.className='heading'; h.textContent='PINNED';
+      sec.appendChild(h);
+      items.filter(n=>n.pinned).forEach(n => sec.appendChild(makeNoteRow(n)));
+      notesList.appendChild(sec);
+    }
+
+    const sec2 = document.createElement('div'); sec2.className='section';
+    const h2 = document.createElement('div'); h2.className='heading'; h2.textContent='NOTES';
+    sec2.appendChild(h2);
+    items.filter(n=>!n.pinned).forEach(n => sec2.appendChild(makeNoteRow(n)));
+    notesList.appendChild(sec2);
+  }
+
+  function makeNoteRow(note){
+    const row = document.createElement('div'); row.className='note-row';
+    // left pin icon
+    if(note.pinned){
+      const pin = document.createElement('div'); pin.className='pin'; pin.textContent='📌';
+      row.appendChild(pin);
+    } else {
+      const spacer = document.createElement('div'); spacer.style.width='2px'; row.appendChild(spacer);
+    }
+
+    const main = document.createElement('div'); main.className='note-main';
+    const titleRow = document.createElement('div'); titleRow.className='note-title';
+    titleRow.innerHTML = highlight(note.title || (note.body || '').split(/\n/).find(l=>l.trim()) || 'Untitled', searchQuery);
+    const time = document.createElement('div'); time.className='note-time'; time.textContent = formatRelative(note.updatedAt);
+    titleRow.appendChild(time);
+    main.appendChild(titleRow);
+
+    const preview = document.createElement('div'); preview.className='note-preview';
+    const previewLine = computePreviewLine(note);
+    preview.innerHTML = highlight(previewLine, searchQuery);
+    main.appendChild(preview);
+
+    const meta = document.createElement('div'); meta.className='note-meta';
+    if(note.locked){
+      const l = document.createElement('div'); l.className='locked'; l.textContent='🔒 Locked';
+      meta.appendChild(l);
+    }
+    if(note.tags && note.tags.length){
+      (note.tags.slice(0,3)).forEach(t=>{
+        const tp = document.createElement('div'); tp.className='tag-pill'; tp.textContent = '#'+t;
+        meta.appendChild(tp);
+      });
+    }
+    main.appendChild(meta);
+
+    row.appendChild(main);
+
+    // actions via context menu on right: small menu
+    const actions = document.createElement('div');
+    actions.style.display='flex';
+    actions.style.gap='6px';
+    actions.style.marginLeft='8px';
+    // pin/unpin
+    const pinBtn = document.createElement('button'); pinBtn.className='btn'; pinBtn.textContent = note.pinned ? 'Unpin' : 'Pin';
+    pinBtn.onclick = (e)=>{ e.stopPropagation(); togglePin(note.id); };
+    actions.appendChild(pinBtn);
+
+    // duplicate
+    const dupBtn = document.createElement('button'); dupBtn.className='btn'; dupBtn.textContent='Dup';
+    dupBtn.onclick = (e)=>{ e.stopPropagation(); duplicateNote(note.id); };
+    actions.appendChild(dupBtn);
+
+    // delete
+    const delBtn = document.createElement('button'); delBtn.className='btn'; delBtn.textContent='Del';
+    delBtn.onclick = (e)=>{ e.stopPropagation(); deleteNote(note.id); };
+    actions.appendChild(delBtn);
+
+    row.appendChild(actions);
+
+    // open on click
+    row.onclick = () => openNote(note.id);
+
+    return row;
+  }
+
+  function computePreviewLine(note){
+    const titleEmpty = !(note.title || '').trim();
+    const lines = (note.body || '').split(/\n/);
+    const afterTitleIndex = titleEmpty ? 1 : 0;
+    const preview = (lines.slice(afterTitleIndex).find(l => l.trim()!=='') || '').trim();
+    return preview;
+  }
+
+  // ===== CRUD operations =====
+  function addNote(){
+    const n = {
+      id: uuidv4(),
+      title: '',
+      body: '',
+      tags: [],
+      pinned: false,
+      locked: false,
+      createdAt: nowISO(),
+      updatedAt: nowISO()
+    };
+    notes.unshift(n);
+    saveAndRender();
+    return n;
+  }
+
+  function updateNote(note){
+    const idx = notes.findIndex(n => n.id === note.id);
+    if(idx>=0){
+      note.updatedAt = nowISO();
+      notes[idx] = note;
+      saveAndRender();
+    }
+  }
+
+  function deleteNote(id){
+    if(!confirm('Delete this note?')) return;
+    notes = notes.filter(n => n.id !== id);
+    saveAndRender();
+  }
+
+  function togglePin(id){
+    const i = notes.findIndex(n=>n.id===id); if(i<0) return;
+    notes[i].pinned = !notes[i].pinned;
+    notes[i].updatedAt = nowISO();
+    saveAndRender();
+  }
+
+  function toggleLock(id, locked){
+    const i = notes.findIndex(n=>n.id===id); if(i<0) return;
+    notes[i].locked = locked;
+    notes[i].updatedAt = nowISO();
+    saveAndRender();
+  }
+
+  function duplicateNote(id){
+    const n = notes.find(n=>n.id===id); if(!n) return;
+    const copy = Object.assign({}, n, { id: uuidv4(), createdAt: nowISO(), updatedAt: nowISO(), title: n.title ? (n.title + ' copy') : '' });
+    notes.unshift(copy);
+    saveAndRender();
+    openNote(copy.id);
+  }
+
+  // ===== Editor =====
+  function openNote(id){
+    const n = notes.find(x=>x.id===id);
+    if(!n) return;
+    // if locked -> authenticate
+    if(n.locked){
+      authenticate().then(ok=>{
+        if(ok) showEditorFor(n);
+      }).catch(()=>{ alert('Unable to unlock note.'); });
+    } else {
+      showEditorFor(n);
+    }
+  }
+
+  function showEditorFor(n){
+    editingNoteId = n.id;
+    noteTitle.value = n.title || '';
+    noteBody.value = n.body || '';
+    lockedCheckbox.checked = !!n.locked;
+    renderTagEditor(n.tags || []);
+    editorModal.classList.add('open');
+    editorModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeEditor(){
+    editorModal.classList.remove('open');
+    editorModal.setAttribute('aria-hidden', 'true');
+    editingNoteId = null;
+  }
+
+  function saveEditor(){
+    if(!editingNoteId) return;
+    const i = notes.findIndex(n=>n.id===editingNoteId); if(i<0) return;
+    const n = notes[i];
+    n.title = noteTitle.value;
+    n.body = noteBody.value;
+    n.tags = Array.from(tagList.querySelectorAll('[data-tag]')).map(el=>el.dataset.tag);
+    n.locked = lockedCheckbox.checked;
+    n.updatedAt = nowISO();
+    notes[i] = n;
+    saveAndRender();
+    closeEditor();
+  }
+
+  function renderTagEditor(tags){
+    tagList.innerHTML = '';
+    (tags||[]).forEach(t=>{
+      const el = document.createElement('div'); el.className='tag'; el.dataset.tag=t;
+      el.innerHTML = `<span>#${escapeHtml(t)}</span> <button style="background:none;border:0;cursor:pointer">✕</button>`;
+      el.querySelector('button').onclick = ()=>{
+        el.remove();
+      };
+      tagList.appendChild(el);
+    });
+  }
+
+  addTagBtn.onclick = ()=>{
+    const v = (tagInput.value||'').trim();
+    if(!v) return;
+    // avoid duplicates
+    const existing = Array.from(tagList.querySelectorAll('[data-tag]')).map(x=>x.dataset.tag.toLowerCase());
+    if(existing.includes(v.toLowerCase())) { tagInput.value=''; return; }
+    const el = document.createElement('div'); el.className='tag'; el.dataset.tag=v;
+    el.innerHTML = `<span>#${escapeHtml(v)}</span> <button style="background:none;border:0;cursor:pointer">✕</button>`;
+    el.querySelector('button').onclick = ()=> el.remove();
+    tagList.appendChild(el);
+    tagInput.value='';
+  };
+  tagInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addTagBtn.click(); } });
+
+  // checklist helpers
+  function isChecklistBody(s){
+    const lines = s.split('\n');
+    if(!lines.length) return false;
+    const checklistCount = lines.filter(l=>l.trim().startsWith('- [')).length;
+    return checklistCount / Math.max(1, lines.length) >= 0.6;
+  }
+  toggleChecklistBtn.onclick = ()=>{
+    const s = noteBody.value;
+    const lines = s.split('\n');
+    if(isChecklistBody(s)){
+      const newLines = lines.map(l=>{
+        const t = l.trim();
+        if(t.startsWith('- [ ] ')) return l.replace('- [ ] ', '');
+        if(t.match(/^- \[[xX]\] /)) return l.replace(/^- \[[xX]\] /, '');
+        return l;
+      });
+      noteBody.value = newLines.join('\n');
+    } else {
+      const newLines = lines.map(l=>{
+        if(l.trim()==='') return l;
+        return '- [ ] ' + l;
+      });
+      noteBody.value = newLines.join('\n');
+    }
+  };
+  insertChecklistItemBtn.onclick = ()=>{
+    if(noteBody.value.length === 0) noteBody.value = '- [ ] ';
+    else if(noteBody.value.endsWith('\n')) noteBody.value += '- [ ] ';
+    else noteBody.value += '\n- [ ] ';
+    noteBody.focus();
+  };
+  insertTimestampBtn.onclick = ()=>{
+    const f = new Date().toLocaleString();
+    if(noteBody.value.trim()==='') noteBody.value = f;
+    else noteBody.value += '\n' + f;
+  };
+  trimBtn.onclick = ()=>{ noteBody.value = noteBody.value.trim(); };
+
+  // editor actions
+  saveBtn.onclick = saveEditor;
+  deleteBtn.onclick = ()=>{
+    if(!editingNoteId) return;
+    if(!confirm('Delete this note?')) return;
+    notes = notes.filter(n => n.id !== editingNoteId);
+    saveAndRender();
+    closeEditor();
+  };
+  duplicateBtn.onclick = ()=>{
+    if(!editingNoteId) return;
+    const n = notes.find(x=>x.id===editingNoteId);
+    if(!n) return;
+    const copy = Object.assign({}, n, { id: uuidv4(), createdAt: nowISO(), updatedAt: nowISO(), title: n.title ? (n.title + ' copy') : '' });
+    notes.unshift(copy);
+    saveAndRender();
+    showEditorFor(copy);
+  };
+  shareBtn.onclick = ()=>{
+    if(!editingNoteId) return;
+    const n = notes.find(x=>x.id===editingNoteId);
+    if(!n) return;
+    const text = (n.title && n.title!=='Untitled' ? (n.title + '\n') : '') + n.body + (n.tags && n.tags.length ? '\n\nTags: ' + n.tags.join(', ') : '');
+    if(navigator.share){
+      navigator.share({ text }).catch(()=>alert('Share canceled'));
+    } else {
+      // fallback: copy to clipboard
+      navigator.clipboard.writeText(text).then(()=> alert('Copied to clipboard'));
+    }
+  };
+
+  // modal close on outside click
+  editorModal.addEventListener('click', (e)=>{
+    if(e.target === editorModal) closeEditor();
+  });
+
+  // ===== Authentication (simple) =====
+  function authenticate(){
+    // There is no biometric API available in browser reliably; simulate with confirm or prompt
+    return new Promise((resolve) => {
+      // For simplicity, use confirm to simulate success/failure
+      const ok = confirm('Authenticate to unlock note? (Simulated)');
+      resolve(ok);
+    });
+  }
+
+  // ===== Settings UI =====
+  settingsBtn.onclick = ()=> openSettings();
+  function openSettings(){
+    accentSelect.value = settings.accent || 'system';
+    densitySelect.value = settings.density || 'comfortable';
+    showTagsCheckbox.checked = settings.showTagChips === undefined ? true : !!settings.showTagChips;
+    settingsModal.classList.add('open');
+    settingsModal.setAttribute('aria-hidden','false');
+  }
+  closeSettingsBtn.onclick = ()=> closeSettings();
+  settingsModal.addEventListener('click', (e)=> { if(e.target===settingsModal) closeSettings(); });
+  function closeSettings(){
+    settingsModal.classList.remove('open');
+    settingsModal.setAttribute('aria-hidden','true');
+    // apply
+    settings.accent = accentSelect.value;
+    settings.density = densitySelect.value;
+    settings.showTagChips = !!showTagsCheckbox.checked;
+    saveSettings(settings);
+    applySettingsToCSS();
+    render();
+  }
+
+  function applySettingsToCSS(){
+    const root = document.documentElement;
+    let color = '#2563eb'; // default
+    if(settings.accent && settings.accent!=='system'){
+      color = settings.accent;
+    } else {
+      color = '#2563eb';
+    }
+    root.style.setProperty('--accent', color);
+    // density affects padding sizes (approx)
+    let pad = 12;
+    if(settings.density === 'compact') pad = 8;
+    if(settings.density === 'spacious') pad = 18;
+    document.querySelectorAll('.note-row').forEach(e => e.style.padding = pad+'px');
+  }
+
+  resetSeedBtn.onclick = ()=>{
+    if(!confirm('Reset to sample notes? This will overwrite your current notes.')) return;
+    notes = JSON.parse(JSON.stringify(defaultSeed));
+    saveAndRender();
+    closeSettings();
+  };
+
+  // ===== Controls Wiring =====
+  newBtn.onclick = ()=> { const n = addNote(); openNote(n.id); };
+  fabBtn.onclick = ()=> newBtn.click();
+  emptyNewBtn.onclick = ()=> newBtn.click();
+
+  searchInput.oninput = (e)=> { searchQuery = e.target.value; render(); };
+  sortSelect.onchange = (e)=> { settings.sort = e.target.value; saveSettings(settings); render(); };
+  clearFilterBtn.onclick = ()=> { selectedTagFilter = null; render(); };
+
+  // settings bindings for immediate preview
+  accentSelect.onchange = (e)=> { settings.accent = e.target.value; applySettingsToCSS(); };
+  densitySelect.onchange = (e)=> { settings.density = e.target.value; applySettingsToCSS(); };
+  showTagsCheckbox.onchange = (e)=> { settings.showTagChips = e.target.checked; };
+
+  // keyboard: escape to close editor/settings
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape'){
+      if(editorModal.classList.contains('open')) closeEditor();
+      if(settingsModal.classList.contains('open')) closeSettings();
+    }
+  });
+
+  // ===== Initialize =====
+  (function init(){
+    // set initial settings UI values
+    sortSelect.value = settings.sort || 'recent';
+    applySettingsToCSS();
+    render();
+  })();
+
+})();
+</script>
 </body>
 </html>
